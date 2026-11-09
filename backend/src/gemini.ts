@@ -3,7 +3,12 @@ import { GoogleGenAI, Modality, type LiveConnectConfig } from "@google/genai";
 export const LIVE_MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-3.8-live";
 export const liveConfigured = Boolean(process.env.GEMINI_API_KEY);
 
-const client = liveConfigured ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+/** SDK v3의 기본값은 v1이지만, 임시 토큰(auth_tokens)은 v1beta/v1alpha에만 있습니다. */
+export const LIVE_API_VERSION = "v1beta";
+
+const client = liveConfigured
+  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { apiVersion: LIVE_API_VERSION } })
+  : null;
 
 export function liveConfig(systemInstruction: string, voiceName: string): LiveConnectConfig {
   return {

@@ -85,7 +85,8 @@ export function useLiveTalk() {
         await player.current.resume();
         const { token, model, config } = await api.liveToken(opts);
 
-        const ai = new GoogleGenAI({ apiKey: token });
+        // 임시 토큰은 v1beta Live 엔드포인트에서만 받아들여집니다. (SDK v3 기본값은 v1)
+        const ai = new GoogleGenAI({ apiKey: token, httpOptions: { apiVersion: "v1beta" } });
         session.current = await ai.live.connect({
           model,
           config,
