@@ -71,6 +71,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: init?.body ? { "content-type": "application/json" } : undefined,
   });
   const data = await res.json().catch(() => ({}));
+  // 로그인이 풀리면 앱 전체에 알려 로그인 화면을 띄웁니다.
+  if (res.status === 401 && !path.startsWith("/auth/")) window.dispatchEvent(new Event("auth-required"));
   if (!res.ok) throw new Error((data as { error?: string }).error ?? `요청 실패 (${res.status})`);
   return data as T;
 }
@@ -81,6 +83,9 @@ export function localDay(d = new Date()): string {
 }
 
 export const api = {
+  authStatus: () => request<{ required: boolean; loggedIn: boolean }>("/auth/status"),
+  login: (password: string) => request<{ ok: true }>("/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
+  logout: () => request<{ ok: true }>("/auth/logout", { method: "POST" }),
   meta: () => request<Meta>("/meta"),
   scenarios: () => request<Scenario[]>("/scenarios"),
   words: (band: number, q = "") => request<WordRow[]>(`/words?band=${band}&q=${encodeURIComponent(q)}`),

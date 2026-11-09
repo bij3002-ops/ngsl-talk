@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { Notice } from "./components/ui";
 import Home from "./screens/Home";
+import Login from "./screens/Login";
 import Me from "./screens/Me";
 import Result from "./screens/Result";
 import Talk from "./screens/Talk";
@@ -19,9 +20,17 @@ const TABS = [
 ];
 
 export default function App() {
-  const { loadError } = useStore();
+  const { loadError, auth } = useStore();
   const { pathname } = useLocation();
   const immersive = /^\/(talk\/|result\/)/.test(pathname);
+
+  if (auth !== "ok") {
+    return (
+      <div className="app immersive">
+        <main className="screen">{auth === "needed" ? <Login /> : null}</main>
+      </div>
+    );
+  }
 
   return (
     <div className={`app ${immersive ? "immersive" : ""}`}>

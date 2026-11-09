@@ -1,6 +1,10 @@
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { authEnabled, isLoggedIn, login, logout, requireAuth } from "./auth.ts";
 import { db, mastery, progressMap } from "./db.ts";
 import { LIVE_MODEL, createLiveToken, liveConfig, liveConfigured } from "./gemini.ts";
 import { bands, isTargetable, lemmasIn, source, wordByLemma, words } from "./ngsl.ts";
@@ -19,6 +23,12 @@ app.onError((err, c) => {
 });
 
 const bad = (msg: string) => new HTTPException(400, { message: msg });
+
+app.get("/health", (c) => c.json({ ok: true }));
+app.get("/auth/status", async (c) => c.json({ required: authEnabled, loggedIn: await isLoggedIn(c) }));
+app.post("/auth/login", login);
+app.post("/auth/logout", logout);
+app.use("*", requireAuth);
 
 app.get("/meta", (c) =>
   c.json({
@@ -187,7 +197,23 @@ app.get("/progress", (c) => {
   });
 });
 
-const port = Number(process.env.API_PORT ?? 8787);
-serve({ fetch: app.fetch, port }, () => {
-  console.log(`API listening on http://localhost:${port}/api (words: ${source}, live: ${liveConfigured ? LIVE_MODEL : "not configured"})`);
+// 배포 환경: 백엔드가 빌드된 프론트엔드(frontend/dist)도 함께 제공합니다.
+const root = new Hono();
+root.route("/", app);
+const distDir = fileURLToPath(new URL("../../frontend/dist/", import.meta.url));
+const serveFrontend = existsSync(distDir);
+root.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
+if (serveFrontend) {
+  root.use("/*", serveStatic({ root: distDir }));
+  // 클라이언트 라우팅(/talk/cafe 등)은 index.html로 돌려보냅니다.
+  root.get("*", serveStatic({ root: distDir, path: "index.html" }));
+}
+
+// 로컬 개발은 API_PORT(기본 8787), 호스팅 서비스는 보통 PORT를 넘겨줍니다.
+const port = Number(process.env.API_PORT ?? process.env.PORT ?? 8787);
+serve({ fetch: root.fetch, port }, () => {
+  console.log(
+    `Listening on http://localhost:${port} (words: ${source}, live: ${liveConfigured ? LIVE_MODEL : "not configured"}, ` +
+      `password: ${authEnabled ? "on" : "off"}, frontend: ${serveFrontend ? "served" : "dev server"})`,
+  );
 });

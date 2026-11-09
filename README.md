@@ -52,6 +52,17 @@ npm run dev
 
 API 키가 없어도 화면, 단어장, 기록 기능은 동작합니다. 음성 대화만 비활성화됩니다.
 
+### 휴대폰에서 테스트하기 (같은 Wi-Fi)
+
+휴대폰 브라우저는 HTTPS 주소에서만 마이크를 허용합니다. 아래 명령은 자체 서명 인증서로 HTTPS 서버를 띄웁니다.
+
+```bash
+npm run dev:mobile
+```
+
+터미널에 표시되는 `Network: https://192.168.x.x:5173` 주소를 휴대폰에서 엽니다. 인증서 경고가 나오면 "고급 → 계속"을 누릅니다.
+Windows 방화벽이 Node.js 허용 여부를 물으면 **개인 네트워크**를 허용하세요.
+
 ### 공식 NGSL 단어 목록 가져오기
 
 저장소에는 동작 확인용 **샘플 단어 목록**(`backend/data/ngsl-sample.csv`, 공식 순위 아님)만 들어 있습니다.
@@ -63,10 +74,32 @@ npm run import:ngsl -w backend -- path/to/NGSL.csv
 
 NGSL은 Browne, Culligan & Phillips가 만든 목록이며 CC BY-SA 4.0 라이선스입니다.
 
+## 배포 (Railway 기준)
+
+백엔드 하나가 API와 빌드된 프론트엔드를 함께 제공합니다(`Dockerfile`). Docker를 지원하는 다른 호스팅에서도 같은 방식으로 배포할 수 있습니다.
+
+1. [railway.com](https://railway.com)에 GitHub 계정으로 가입하고 **Hobby** 플랜을 선택합니다. (월 $5, 사용료 $5 포함)
+2. **New Project → Deploy from GitHub repo**에서 이 저장소를 고릅니다. `Dockerfile`과 `railway.json`이 자동으로 인식됩니다.
+3. 서비스의 **Variables**에 아래 값을 넣습니다.
+
+   | 변수 | 값 |
+   |---|---|
+   | `GEMINI_API_KEY` | Google AI Studio 키 |
+   | `APP_PASSWORD` | 접속 비밀번호 (**반드시 설정**) |
+   | `SESSION_SECRET` | 긴 임의 문자열 (예: `openssl rand -hex 32`) |
+   | `DB_PATH` | `/data/app.db` (Dockerfile 기본값) |
+
+4. 서비스에서 **Volume**을 추가하고 마운트 경로를 `/data`로 지정합니다. 볼륨이 없으면 재배포할 때마다 학습 기록이 사라집니다.
+5. **Settings → Networking → Generate Domain**으로 공개 주소를 만듭니다.
+
+이후에는 `main` 브랜치에 push할 때마다 자동으로 다시 배포됩니다.
+
+> ⚠️ `APP_PASSWORD` 없이 공개 주소로 배포하면 누구나 내 Gemini API 사용량을 쓸 수 있습니다.
+
 ## 다음 할 일
 
 - [ ] 세션 재개(session resumption)로 10분 넘는 대화 지원
-- [ ] 로그인과 사용자별 데이터 (`user_id`)
+- [ ] 여러 사용자 계정과 사용자별 데이터 (`user_id`) — 지금은 비밀번호 하나로 접속하는 1인용입니다
 - [ ] 대화 후 튜터의 문법/표현 피드백 요약
 - [ ] 간격 반복(SRS)으로 목표 단어 선택 개선
 - [ ] PWA 설치, 모바일 앱(React Native/Flutter) 검토

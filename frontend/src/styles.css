@@ -692,6 +692,20 @@ mark {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- login ---------- */
+.login {
+  max-width: 360px;
+  margin: 12vh auto 0;
+}
+.logo.big {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
 /* ---------- me ---------- */
 .form label {
   display: flex;

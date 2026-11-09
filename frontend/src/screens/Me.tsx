@@ -2,7 +2,7 @@ import { api, LEVEL_KO, type Level } from "../api";
 import { useAsync, useStore } from "../store";
 
 export default function Me() {
-  const { meta, settings, updateSettings } = useStore();
+  const { meta, settings, updateSettings, authRequired, onLoggedOut } = useStore();
   const { data: p } = useAsync(() => api.progress(), []);
 
   return (
@@ -88,6 +88,12 @@ export default function Me() {
           NGSL: Browne, C., Culligan, B. &amp; Phillips, J. New General Service List, CC BY-SA 4.0.
         </p>
       </section>
+
+      {authRequired && (
+        <button className="btn ghost block" onClick={() => api.logout().then(onLoggedOut)}>
+          로그아웃
+        </button>
+      )}
     </div>
   );
 }

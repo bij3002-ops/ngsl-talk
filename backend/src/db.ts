@@ -1,8 +1,12 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 
-// MVP는 단일 사용자 기준입니다. 로그인을 붙일 때 user_id 컬럼을 추가하세요.
+// MVP는 단일 사용자 기준입니다. 여러 사용자를 받으려면 user_id 컬럼을 추가하세요.
+// 배포할 때는 DB_PATH를 영구 저장소(볼륨) 경로로 지정하세요. 예: /data/app.db
 const dbPath = process.env.DB_PATH ?? fileURLToPath(new URL("../data/app.db", import.meta.url));
+mkdirSync(dirname(dbPath), { recursive: true });
 export const db = new DatabaseSync(dbPath);
 
 db.exec(`
