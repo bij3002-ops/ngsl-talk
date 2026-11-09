@@ -3,13 +3,21 @@
   "private": true,
   "version": "0.1.0",
   "description": "NGSL 기반 영어 회화 학습 앱 (Gemini Live 음성 대화)",
-  "workspaces": ["backend", "frontend"],
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w frontend",
-    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend"
+    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
+    "dev:mobile": "concurrently -n api,web -c cyan,magenta \"npm run dev -w backend\" \"npm run dev:mobile -w frontend\"",
+    "start": "npm run start -w backend"
   },
   "devDependencies": {
     "concurrently": "^10.0.7"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
