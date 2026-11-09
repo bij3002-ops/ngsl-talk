@@ -4,5 +4,6 @@ dist/
 *.local
 backend/data/*.db
 backend/data/*.db-*
+backend/data/pglite/
 backend/data/ngsl.csv
 .DS_Store

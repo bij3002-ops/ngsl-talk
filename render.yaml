@@ -1,0 +1,18 @@
+# Render Blueprint: New → Blueprint에서 이 저장소를 고르면 아래 설정으로 서비스가 만들어집니다.
+services:
+  - type: web
+    name: ngsl-talk
+    runtime: docker
+    plan: free
+    region: singapore # Supabase(서울)와 가장 가까운 Render 지역
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # 만들 때 직접 입력
+      - key: APP_PASSWORD
+        sync: false # 만들 때 직접 입력 (반드시 설정)
+      - key: DATABASE_URL
+        sync: false # Supabase Transaction pooler 주소
+      - key: SESSION_SECRET
+        generateValue: true # Render가 임의 값을 만들어 줍니다

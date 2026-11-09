@@ -7,12 +7,12 @@ Google **Gemini Live API**로 AI 튜터와 실시간 음성 대화를 합니다.
 
 ```
 ngsl-app/
-├─ backend/    Node + TypeScript (Hono, node:sqlite)
+├─ backend/    Node + TypeScript (Hono, Postgres)
 │  ├─ src/index.ts      REST API (/api/*)
 │  ├─ src/gemini.ts     Gemini Live 임시 토큰 발급
 │  ├─ src/ngsl.ts       단어 목록 로딩, 밴드, 활용형 매칭
 │  ├─ src/scenarios.ts  회화 상황과 튜터 시스템 프롬프트
-│  ├─ src/db.ts         SQLite (단어 숙련도, 세션 기록)
+│  ├─ src/db.ts         Postgres (Supabase, 로컬은 PGlite)
 │  └─ data/             단어 CSV, app.db
 └─ frontend/   React + Vite + TypeScript
    ├─ src/live/         Gemini Live 연결, 마이크/재생 오디오 처리
@@ -39,7 +39,7 @@ ngsl-app/
 
 ## 시작하기
 
-필요한 것: Node.js 24 이상 (`node:sqlite` 사용)
+필요한 것: Node.js 24 이상
 
 ```bash
 npm install
@@ -74,27 +74,40 @@ npm run import:ngsl -w backend -- path/to/NGSL.csv
 
 NGSL은 Browne, Culligan & Phillips가 만든 목록이며 CC BY-SA 4.0 라이선스입니다.
 
-## 배포 (Railway 기준)
+## 배포 (Render 무료 + Supabase 무료)
 
-백엔드 하나가 API와 빌드된 프론트엔드를 함께 제공합니다(`Dockerfile`). Docker를 지원하는 다른 호스팅에서도 같은 방식으로 배포할 수 있습니다.
+백엔드 하나가 API와 빌드된 프론트엔드를 함께 제공합니다(`Dockerfile`). 학습 기록은 Supabase Postgres에 저장합니다.
 
-1. [railway.com](https://railway.com)에 GitHub 계정으로 가입하고 **Hobby** 플랜을 선택합니다. (월 $5, 사용료 $5 포함)
-2. **New Project → Deploy from GitHub repo**에서 이 저장소를 고릅니다. `Dockerfile`과 `railway.json`이 자동으로 인식됩니다.
-3. 서비스의 **Variables**에 아래 값을 넣습니다.
+**무료 플랜의 한계**
+- Render 무료 서버는 15분 동안 접속이 없으면 잠들고, 다시 열 때 약 1분이 걸립니다. 서버 안의 파일은 재시작하면 사라집니다.
+- Supabase 무료 프로젝트는 1주일 동안 쓰지 않으면 일시 정지됩니다. 대시보드에서 다시 켤 수 있습니다.
+
+### 1. Supabase (DB)
+1. [supabase.com](https://supabase.com)에서 **New project**를 만듭니다. 지역은 **Northeast Asia (Seoul)**.
+2. 프로젝트 상단의 **Connect** → **Transaction pooler** 주소를 복사합니다. `[YOUR-PASSWORD]` 부분을 DB 비밀번호로 바꿉니다.
+   - 형식: `postgresql://postgres.<프로젝트ID>:<비밀번호>@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres`
+3. 테이블은 서버가 처음 시작할 때 자동으로 만듭니다.
+
+### 2. Render (서버)
+1. [render.com](https://render.com)에 GitHub 계정으로 가입합니다.
+2. **New → Blueprint**에서 이 저장소를 고릅니다. `render.yaml`이 인식됩니다.
+3. 입력 칸에 값을 넣습니다.
 
    | 변수 | 값 |
    |---|---|
    | `GEMINI_API_KEY` | Google AI Studio 키 |
    | `APP_PASSWORD` | 접속 비밀번호 (**반드시 설정**) |
-   | `SESSION_SECRET` | 긴 임의 문자열 (예: `openssl rand -hex 32`) |
-   | `DB_PATH` | `/data/app.db` (Dockerfile 기본값) |
+   | `DATABASE_URL` | 위에서 만든 Supabase 주소 |
+   | `SESSION_SECRET` | Render가 자동 생성 |
 
-4. 서비스에서 **Volume**을 추가하고 마운트 경로를 `/data`로 지정합니다. 볼륨이 없으면 재배포할 때마다 학습 기록이 사라집니다.
-5. **Settings → Networking → Generate Domain**으로 공개 주소를 만듭니다.
+4. 배포가 끝나면 `https://ngsl-talk-xxxx.onrender.com` 주소로 접속합니다. 휴대폰에서도 바로 열립니다.
 
 이후에는 `main` 브랜치에 push할 때마다 자동으로 다시 배포됩니다.
 
-> ⚠️ `APP_PASSWORD` 없이 공개 주소로 배포하면 누구나 내 Gemini API 사용량을 쓸 수 있습니다.
+> ⚠️ `APP_PASSWORD` 없이 배포하면 누구나 내 Gemini API 사용량을 쓸 수 있습니다.
+
+### 로컬에서도 같은 DB 쓰기
+`backend/.env`에 같은 `DATABASE_URL`을 넣으면 PC와 휴대폰이 같은 학습 기록을 봅니다. 비워 두면 로컬 전용 내장 Postgres(PGlite)를 `backend/data/pglite`에 만듭니다.
 
 ## 다음 할 일
 
